@@ -77,6 +77,7 @@ dev-dependencies = [
     "isort", 
     "flake8",
 ]
+index-url = "https://pypi.org/simple"
 
 [tool.black]
 line-length = 88
