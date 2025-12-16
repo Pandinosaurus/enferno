@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Stop configuring. Start shipping.**
+**[Live Demo](https://demo.enferno.io/)** · **Stop configuring. Start shipping.**
 
 ~~Webpack~~ ~~Vite~~ ~~node_modules~~ ~~npm install~~ — Just Python.
 
@@ -14,7 +14,10 @@ uv run flask install          # Create admin user
 uv run flask run              # → http://localhost:5000
 ```
 
-![Enferno Demo](docs/enferno-demo.gif)
+
+https://github.com/user-attachments/assets/a87bfad2-45dc-4d94-bdf1-0448dfea8084
+
+
 
 Why Enferno?
 ===========
@@ -29,9 +32,21 @@ Why Enferno?
 What's Included
 ---------------
 - **Frontend**: Vue 3, Vuetify 3, Axios - no build tools needed
-- **Auth**: Login, registration, 2FA, WebAuthn, OAuth (Google/GitHub)
+- **Auth**: Login, registration, password recovery, session management
+- **2FA**: TOTP authenticator apps (Google Authenticator, Authy, 1Password)
+- **WebAuthn**: Passkeys and hardware security keys (YubiKey, Touch ID)
+- **Recovery codes**: Backup codes for account recovery
+- **OAuth**: Google and GitHub login
 - **Database**: SQLAlchemy ORM, migrations ready
 - **Patterns**: Data tables, dialogs, notifications - ready to use
+
+### UI Features
+
+- **Collapsible sidebar** - Nested navigation groups with smooth expand/collapse animations
+- **Dark mode** - Theme toggle with localStorage persistence, auto-detects system preference
+- **Tabler Icons** - 5000+ icons via CDN, no build step
+- **Ember color palette** - Fire-inspired theme matching the Enferno brand
+- **Polish included** - Card hover effects, smooth scrollbars, styled data tables
 
 Requirements: Python 3.11+ and [uv](https://docs.astral.sh/uv/)
 
@@ -44,6 +59,14 @@ uv sync --extra full        # Adds Redis + Celery
 # Set REDIS_URL, CELERY_BROKER_URL in .env
 ```
 
+### Sanity Checks
+
+No pytest ceremony - just real code paths:
+
+```bash
+uv run python checks.py     # Run before deploying
+```
+
 ### Docker
 
 Full production stack with one command:
@@ -51,6 +74,16 @@ Full production stack with one command:
 ```bash
 docker compose up --build   # Redis, PostgreSQL, Nginx, Celery
 ```
+
+### VPS Deploy
+
+One command to deploy on any Ubuntu VPS (Hetzner, DigitalOcean, etc.):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/level09/ignite/main/ignite.sh | sudo DOMAIN=your-domain.com bash
+```
+
+Handles Caddy (auto SSL), Python 3.13, Redis, systemd services. See [Ignite](https://github.com/level09/ignite).
 
 Configuration
 ------------
