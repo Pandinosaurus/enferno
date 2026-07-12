@@ -1,6 +1,6 @@
 [project]
 name = "enferno"
-version = "13.1.2"
+version = "13.2.0"
 description = "A modern Flask framework optimized for AI-assisted development workflows"
 authors = [
     {name = "Level09", email = "hello@level09.com"}
@@ -25,6 +25,7 @@ dependencies = [
     "flask-debugtoolbar>=0.16.0",
     "flask-login>=0.6.3",
     "flask-mail>=0.10.0",
+    "flask-migrate>=4.1.0",
     "flask-script>=2.0.6",
     # 5.8.0-5.8.1: unpatched WebAuthn reauth freshness bypass (GHSA-f66q-9rf6-8795)
     "flask-security-too>=5.7.1,<5.8",

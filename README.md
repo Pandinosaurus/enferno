@@ -37,7 +37,7 @@ What's Included
 - **WebAuthn**: Passkeys and hardware security keys (YubiKey, Touch ID)
 - **Recovery codes**: Backup codes for account recovery
 - **OAuth**: Google and GitHub login
-- **Database**: SQLAlchemy ORM, migrations ready
+- **Database**: SQLAlchemy ORM with Alembic migrations
 - **Patterns**: Data tables, dialogs, notifications - ready to use
 
 ### UI Features
@@ -58,6 +58,21 @@ When you need Celery for async jobs:
 uv sync --extra full        # Adds Redis + Celery
 # Set REDIS_URL, CELERY_BROKER_URL in .env
 ```
+
+### Database Migrations
+
+Schema changes are managed with Alembic (Flask-Migrate). Autogenerate drafts the
+migration; always review and edit it before applying:
+
+```bash
+uv run flask db migrate -m "add status to user"   # Draft from model changes
+# Review migrations/versions/<revision>.py, adjust as needed
+uv run flask db upgrade                           # Apply
+```
+
+Fresh databases: `uv run flask create-db` builds the full schema and stamps it
+automatically. Databases created before migrations existed: run
+`uv run flask db stamp head` once, then use the workflow above.
 
 ### Sanity Checks
 
