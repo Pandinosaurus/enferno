@@ -26,7 +26,8 @@ dependencies = [
     "flask-login>=0.6.3",
     "flask-mail>=0.10.0",
     "flask-script>=2.0.6",
-    "flask-security-too>=5.7.1",
+    # 5.8.0-5.8.1: unpatched WebAuthn reauth freshness bypass (GHSA-f66q-9rf6-8795)
+    "flask-security-too>=5.7.1,<5.8",
     "flask-session>=0.8.0",
     "flask-sqlalchemy>=3.1.1",
     "flask-wtf>=1.2.2",
