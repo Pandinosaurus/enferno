@@ -36,7 +36,7 @@ class Config:
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     DEBUG_TB_ENABLED = os.environ.get("DEBUG_TB_ENABLED")
     DEBUG_TB_INTERCEPT_REDIRECTS = False
-    CACHE_TYPE = "simple"  # Can be "memcached", "redis", etc.
+    CACHE_TYPE = "flask_caching.backends.SimpleCache"
 
     # Database - default to SQLite in instance folder (absolute path)
     _default_db = f"sqlite:///{os.path.join(PROJECT_ROOT, 'instance', 'enferno.db')}"
@@ -98,7 +98,6 @@ class Config:
     SESSION_SQLALCHEMY_TABLE = "sessions"
 
     SESSION_KEY_PREFIX = "session:"
-    SESSION_USE_SIGNER = True
     PERMANENT_SESSION_LIFETIME = 3600
     SESSION_COOKIE_SECURE = (
         os.environ.get("SESSION_COOKIE_SECURE", "False").lower() == "true"

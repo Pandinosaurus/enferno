@@ -9,10 +9,6 @@ Usage:
 """
 
 import sys
-import warnings
-
-# Suppress passlib pkg_resources deprecation warning
-warnings.filterwarnings("ignore", message="pkg_resources is deprecated")
 
 VERBOSE = "-v" in sys.argv
 PASSED = 0
@@ -102,7 +98,7 @@ def check_routes(app):
 @check("Security config is sane")
 def check_security_config(app):
     assert app.config["SECURITY_PASSWORD_LENGTH_MIN"] >= 8
-    assert app.config["SESSION_USE_SIGNER"] is True
+    assert app.config["SESSION_COOKIE_HTTPONLY"] is True
 
 
 # =============================================================================
