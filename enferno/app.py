@@ -8,11 +8,11 @@ from flask_dance.contrib.google import make_google_blueprint
 from flask_security import Security, SQLAlchemyUserDatastore, current_user
 
 import enferno.commands as commands
-from enferno.extensions import babel, cache, db, debug_toolbar, mail, session
+from enferno.extensions import babel, cache, db, debug_toolbar, mail, migrate, session
 from enferno.portal.views import portal
 from enferno.public.views import public
 from enferno.settings import Config
-from enferno.user.forms import ExtendedRegisterForm
+from enferno.user.forms import ExtendedRegisterForm, OAuthAwareChangePasswordForm
 from enferno.user.models import OAuth, Role, User, WebAuthn
 from enferno.user.views import bp_user
 
@@ -36,8 +36,14 @@ def locale_selector():
 def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
+    migrate.init_app(app, db)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role, webauthn_model=WebAuthn)
-    Security(app, user_datastore, register_form=ExtendedRegisterForm)
+    Security(
+        app,
+        user_datastore,
+        register_form=ExtendedRegisterForm,
+        change_password_form=OAuthAwareChangePasswordForm,
+    )
     mail.init_app(app)
     debug_toolbar.init_app(app)
 

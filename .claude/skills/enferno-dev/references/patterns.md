@@ -19,9 +19,10 @@ Complete blueprint with models, views, and templates:
 
 ```python
 # enferno/products/models.py
+from datetime import datetime
+
 from enferno.extensions import db
 from enferno.utils.base import BaseMixin
-from datetime import datetime
 
 class Category(db.Model, BaseMixin):
     __tablename__ = "categories"
@@ -54,36 +55,39 @@ class Product(db.Model, BaseMixin):
             "active": self.active
         }
 
-    @staticmethod
-    def from_dict(data):
-        return Product(
-            name=data.get("name"),
-            description=data.get("description"),
-            price=data.get("price"),
-            category_id=data.get("category_id"),
-            active=data.get("active", True)
-        )
+    def from_dict(self, data):
+        self.name = data.get("name", self.name)
+        self.description = data.get("description", self.description)
+        self.price = data.get("price", self.price)
+        self.category_id = data.get("category_id", self.category_id)
+        self.active = data.get("active", self.active)
+        return self
 ```
 
 ```python
 # enferno/products/views.py
 from flask import Blueprint, request, render_template
-from flask_security import roles_required, current_user, login_required
+from flask_security import auth_required, current_user, roles_required
 from enferno.extensions import db
 from enferno.user.models import Activity
 from .models import Product, Category
 
 bp = Blueprint("products", __name__)
 
+# Protect all routes in this blueprint
+@bp.before_request
+@auth_required("session")
+@roles_required("admin")
+def before_request():
+    pass
+
 # Page routes
 @bp.get("/products/")
-@login_required
 def products_page():
     return render_template("products/index.html")
 
 # API routes
 @bp.get("/api/products")
-@roles_required("admin")
 def list_products():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 25, type=int)
@@ -100,11 +104,10 @@ def list_products():
     return {
         "items": [p.to_dict() for p in pagination.items],
         "total": pagination.total,
-        "perPage": per_page
+        "perPage": pagination.per_page,
     }
 
 @bp.get("/api/categories")
-@roles_required("admin")
 def list_categories():
     query = db.select(Category)
     categories = db.session.execute(query).scalars().all()
@@ -288,8 +291,10 @@ def list_products():
 Complete Vue setup with CRUD dialogs:
 
 ```javascript
+const vuetify = createVuetify(config.vuetifyConfig);
+
 createApp({
-  delimiters: ['${', '}'],
+  delimiters: config.delimiters,
   setup() {
     const items = ref([]);
     const total = ref(0);
@@ -318,7 +323,7 @@ createApp({
     async function saveItem() {
       saving.value = true;
       const url = editMode.value ? `/api/product/${selectedItem.value.id}` : '/api/product/';
-      await axios.post(url, form.value);
+      await axios.post(url, { item: form.value });
       dialog.value = false;
       saving.value = false;
       loadItems({ page: 1, itemsPerPage: 25 });
@@ -339,7 +344,7 @@ createApp({
 
     return { items, total, loading, dialog, confirmDialog, editMode, saving, deleting, form, openCreate, editItem, saveItem, deleteItem, confirmDelete };
   }
-}).use(createVuetify(vuetifyConfig)).mount('#app');
+}).use(vuetify).mount('#app');
 ```
 
 ## Error Handling

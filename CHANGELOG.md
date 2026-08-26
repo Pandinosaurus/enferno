@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Install Celery and Redis in the production Docker image. The image synced only the `wsgi` extra while `docker-compose.yml` runs a Celery worker, so `enferno.tasks` always fell back to `CELERY_AVAILABLE = False`.
+
+### Changed
+- Removed the passlib, flask-script, speaklater, six, mako, python-editor, pycparser, cffi and bcrypt pins. Flask-Security-Too supplies the `passlib` namespace through libpass, so the explicit passlib 1.7.4 pin was shadowing it.
+- Dropped the `setuptools<82` pin, which only existed for passlib 1.7.4's use of `pkg_resources`, and the warning suppression that went with it.
+- Dropped the kombu, amqp and vine pins from the `full` extra; Celery pulls them in.
+- Raised the cryptography floor to 50.0.0.
+- Removed `enferno.__version__`. Nothing read it and it had drifted to 12.0.0 while `pyproject.toml` said 13.2.0, which is now the single source of truth.
+- Replaced the deprecated `CACHE_TYPE = "simple"` with the full backend path, dropped `SESSION_USE_SIGNER` (deprecated in Flask-Session and removed in its next minor release), and moved to `RegisterFormV2`.
+
 ## v11.3.0 (2025-12-02)
 
 ### Added

@@ -14,7 +14,7 @@ Flask + Vue 3 + Vuetify 3 framework. No build step. SQLAlchemy 2.x patterns.
 uv run flask run --port 5001      # Dev server (5001 on macOS)
 uv run flask create-db            # Init database
 uv run flask install              # Create admin user
-uv run ruff format . && uv run ruff check --fix .  # Format + lint
+uv run ruff check . && uv run ruff format .        # Lint + format
 ```
 
 ## Blueprint Structure
@@ -37,7 +37,7 @@ app.register_blueprint(feature_bp)
 
 ## Models
 
-Always use `BaseMixin` and implement `to_dict()`/`from_dict()`:
+Use `BaseMixin` and implement `to_dict()`/`from_dict()` on instances:
 
 ```python
 from enferno.extensions import db
@@ -54,14 +54,16 @@ class Product(db.Model, BaseMixin):
     def to_dict(self):
         return {"id": self.id, "name": self.name, "price": float(self.price), "active": self.active}
 
-    @staticmethod
-    def from_dict(data):
-        return Product(name=data.get("name"), price=data.get("price"), active=data.get("active", True))
+    def from_dict(self, data):
+        self.name = data.get("name", self.name)
+        self.price = data.get("price", self.price)
+        self.active = data.get("active", self.active)
+        return self
 ```
 
 ## API Endpoints
 
-Standard CRUD pattern with pagination:
+Standard CRUD pattern with pagination and `{item: ...}` payloads:
 
 ```python
 from flask import Blueprint, request
@@ -69,10 +71,16 @@ from flask_security import roles_required, current_user
 from enferno.extensions import db
 from enferno.user.models import Activity
 
-bp = Blueprint("products", __name__, url_prefix="/api")
+bp = Blueprint("products", __name__)
 
-@bp.get("/products")
+
+@bp.before_request
+@auth_required("session")
 @roles_required("admin")
+def before_request():
+    pass
+
+@bp.get("/api/products")
 def list_products():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 25, type=int)
@@ -80,32 +88,30 @@ def list_products():
     pagination = db.paginate(query, page=page, per_page=per_page)
     return {"items": [p.to_dict() for p in pagination.items], "total": pagination.total, "perPage": per_page}
 
-@bp.post("/product/")
-@roles_required("admin")
+@bp.post("/api/product/")
 def create_product():
-    data = request.json
-    product = Product.from_dict(data)
-    product.save()
+    data = request.json.get("item", {})
+    product = Product().from_dict(data)
+    db.session.add(product)
+    db.session.commit()
     Activity.register(current_user.id, "Product Create", product.to_dict())
     return {"item": product.to_dict()}
 
-@bp.post("/product/<int:id>")
-@roles_required("admin")
+@bp.post("/api/product/<int:id>")
 def update_product(id):
     product = db.get_or_404(Product, id)
     old = product.to_dict()
-    product.name = request.json.get("name", product.name)
-    product.price = request.json.get("price", product.price)
-    product.save()
+    product.from_dict(request.json.get("item", {}))
+    db.session.commit()
     Activity.register(current_user.id, "Product Update", {"old": old, "new": product.to_dict()})
     return {"item": product.to_dict()}
 
-@bp.delete("/product/<int:id>")
-@roles_required("admin")
+@bp.delete("/api/product/<int:id>")
 def delete_product(id):
     product = db.get_or_404(Product, id)
     Activity.register(current_user.id, "Product Delete", product.to_dict())
-    product.delete()
+    db.session.delete(product)
+    db.session.commit()
     return {"deleted": True}
 ```
 
@@ -116,24 +122,29 @@ Uses `${}` delimiters (not `{{}}`). Mount per-page Vue apps:
 ```html
 {% extends "layout.html" %}
 {% block content %}
-<div id="app">
-  <v-data-table-server
-    :headers="headers"
-    :items="items"
-    :items-length="total"
-    :loading="loading"
-    @update:options="loadItems"
-  ></v-data-table-server>
-</div>
+<v-app id="app">
+  <v-main>
+    <v-container>
+      <v-data-table-server
+        :headers="headers"
+        :items="items"
+        :items-length="total"
+        :loading="loading"
+        @update:options="loadItems"
+      ></v-data-table-server>
+    </v-container>
+  </v-main>
+</v-app>
 {% endblock %}
 
 {% block js %}
 <script>
-const { createApp, ref, onMounted } = Vue;
+const { createApp, ref } = Vue;
 const { createVuetify } = Vuetify;
+const vuetify = createVuetify(config.vuetifyConfig);
 
 createApp({
-  delimiters: ['${', '}'],
+  delimiters: config.delimiters,
   setup() {
     const items = ref([]);
     const total = ref(0);
@@ -154,7 +165,7 @@ createApp({
 
     return { items, total, loading, headers, loadItems };
   }
-}).use(createVuetify(vuetifyConfig)).mount('#app');
+}).use(vuetify).mount('#app');
 </script>
 {% endblock %}
 ```
@@ -188,10 +199,10 @@ Activity.register(current_user.id, "Action Name", {"relevant": "data"})
 
 ## Celery Tasks
 
-Define in `enferno/tasks/views.py`:
+Define in a tasks module and import Celery from `enferno.tasks`:
 
 ```python
-from enferno.extensions import celery
+from enferno.tasks import celery
 
 @celery.task
 def process_order(order_id):

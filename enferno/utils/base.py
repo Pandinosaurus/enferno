@@ -1,3 +1,4 @@
+from flask import current_app
 from sqlalchemy import exc
 
 from enferno.extensions import db
@@ -11,7 +12,7 @@ class BaseMixin:
                 db.session.commit()
                 return self
             except exc.SQLAlchemyError as e:
-                print(e)
+                current_app.logger.error(f"Database save error: {e}")
                 db.session.rollback()
                 return None
 
@@ -22,6 +23,6 @@ class BaseMixin:
                 db.session.commit()
                 return self
             except exc.SQLAlchemyError as e:
-                print(e)
+                current_app.logger.error(f"Database delete error: {e}")
                 db.session.rollback()
                 return None

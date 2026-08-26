@@ -1,6 +1,8 @@
 from flask import Blueprint
 from flask.templating import render_template
-from flask_security import auth_required
+from flask_security import auth_required, current_user
+
+from enferno.user.models import Activity, Role, User
 
 portal = Blueprint("portal", __name__, static_folder="../static")
 
@@ -11,12 +13,13 @@ def before_request():
     pass
 
 
-@portal.after_request
-def add_header(response):
-    response.headers["Cache-Control"] = "public, max-age=10800"
-    return response
-
-
 @portal.route("/dashboard/")
 def dashboard():
-    return render_template("dashboard.html")
+    stats = {}
+    if current_user.has_role("admin"):
+        stats = {
+            "users": User.query.count(),
+            "roles": Role.query.count(),
+            "activities": Activity.query.count(),
+        }
+    return render_template("dashboard.html", stats=stats)
